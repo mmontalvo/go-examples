@@ -34,10 +34,10 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	// Build a string with the hostname.
 	greeting := fmt.Sprintf("Greeting from %s!\n", host)
 	fmt.Fprintf(w, greeting)
-	time.Sleep(2 * time.Second)
 }
 
 func main() {
+	done := make(chan bool, 1)
 	sigint := make(chan os.Signal, 1)
 
 	// Create a request multiplexer. This will match an incoming request to a
@@ -49,23 +49,29 @@ func main() {
 	// http://0.0.0.0:8080/ will be handled by the 'homeHandler' function.
 	mux.HandleFunc("/", homeHandler)
 
-	// Interrupt signal (sent from terminal e.g. Ctrl + C)
-	signal.Notify(sigint, os.Interrupt)
-	// SIGTERM signal (sent from kubernetes)
-	signal.Notify(sigint, syscall.SIGTERM)
+	signal.Notify(sigint,
+		os.Interrupt,    // Sent from the terminal, e.g., Ctrl+C.
+		syscall.SIGTERM, // Sent to signal pod to shutdown or something.
+	)
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal(err)
+		<-sigint
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		server.SetKeepAlivesEnabled(false)
+		if err := server.Shutdown(ctx); err != nil {
+			log.Fatalf("Unable to do graceful shutdown: %v", err)
 		}
+
+		close(done)
 	}()
 
-	<-sigint
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	server.Shutdown(ctx)
-
+	<-done
 	log.Printf("Gracefully stopped")
 }
