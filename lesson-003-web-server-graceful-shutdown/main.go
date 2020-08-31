@@ -56,6 +56,7 @@ func main() {
 
 	go func() {
 		<-sigint
+		log.Printf("Shutting down server")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
