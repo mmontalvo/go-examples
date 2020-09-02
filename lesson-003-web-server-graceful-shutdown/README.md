@@ -82,4 +82,4 @@ To see our example working as we expect (having a graceful shutdown) we would ne
 
 _Hint: we would also need to `ctrl + c` our **for loop** in Terminal 2 to prevent our script to continue sending requests to our stopped server_
 
-We could also open a new terminal and first find the PID of our process e.g. `pgrep -i main`. This command will output the our main process ID. We can them call `kill -SIGTERM _processid_` to see how our server behaves when it receives the other signal we defined in our server.
+We could also open a new terminal and first find the PID of our process e.g. `pgrep -i main`. This command will output the our main process ID. We can then call `kill -SIGTERM _processid_` to see how our server behaves when it receives the other signal we defined in our server.
