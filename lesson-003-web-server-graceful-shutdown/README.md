@@ -48,7 +48,7 @@ In line 6 is where we start a new `goroutine`, calling our already defined `prin
 **_But how are we going to use both features together?_**
 
 
-We need to point something about channels: they are **blocking by deefault**.
+We need to point something about channels: they are **blocking by default**.
 
 We can use this in our benefit and block our server from being closed until all pending requests have been served when we receive a specific signal.
 
